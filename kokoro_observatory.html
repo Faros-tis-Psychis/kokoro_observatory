@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="心の観測所">
+<title>小さな心の観測所</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06080f;
+    --card-bg: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --text: rgba(255,255,255,0.75);
+    --text-dim: rgba(255,255,255,0.35);
+    --accent: #a8b8d8;
+    --accent-light: #d4e0f4;
+    --font-serif: 'Shippori Mincho', 'Noto Serif JP', serif;
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-serif);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background: linear-gradient(160deg, #06080f 0%, #0d1220 45%, #111828 100%);
+    min-height: 100vh;
+  }
+
+  /* ── Stars ── */
+  #stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: var(--op, .4); transform: scale(1); }
+    50%       { opacity: calc(var(--op, .4) * .25); transform: scale(.7); }
+  }
+
+  /* ── Layout ── */
+  #app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px 80px;
+    min-height: 100vh;
+  }
+
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 520px;
+    animation: fadeIn .5s ease;
+  }
+
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 40px 28px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 48px rgba(0,0,0,.55);
+  }
+
+  /* ── Intro ── */
+  .intro-icon { text-align: center; font-size: 42px; margin-bottom: 16px; }
+
+  .main-title {
+    text-align: center;
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: .16em;
+    color: var(--accent-light);
+    margin-bottom: 20px;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(164,184,216,.4), transparent);
+    margin-bottom: 28px;
+  }
+
+  .intro-body {
+    font-size: 13.5px;
+    line-height: 2.3;
+    text-align: center;
+    color: rgba(255,255,255,.68);
+    letter-spacing: .05em;
+    margin-bottom: 20px;
+  }
+
+  .intro-hint {
+    font-size: 11.5px;
+    text-align: center;
+    color: rgba(164,184,216,.55);
+    letter-spacing: .08em;
+    margin-bottom: 28px;
+  }
+
+  .btn-primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid rgba(164,184,216,.5);
+    border-radius: 40px;
+    color: var(--accent-light);
+    font-size: 13.5px;
+    letter-spacing: .16em;
+    cursor: pointer;
+    transition: background .25s, border-color .25s;
+    font-family: var(--font-serif);
+    margin-bottom: 16px;
+  }
+
+  .btn-primary:hover { background: rgba(164,184,216,.08); border-color: rgba(164,184,216,.8); }
+
+  .disclaimer {
+    font-size: 10px;
+    text-align: center;
+    color: rgba(255,255,255,.18);
+    letter-spacing: .05em;
+  }
+
+  /* ── Quiz ── */
+  .progress-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .pdot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    transition: background .3s, transform .3s;
+  }
+
+  .pdot.done    { background: var(--accent); }
+  .pdot.current { background: var(--accent-light); transform: scale(1.4); }
+
+  .q-num {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: rgba(164,184,216,.45);
+    margin-bottom: 12px;
+  }
+
+  .q-text {
+    text-align: center;
+    font-size: 15px;
+    line-height: 2;
+    color: rgba(255,255,255,.88);
+    letter-spacing: .05em;
+    margin-bottom: 26px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+
+  .opt-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    color: rgba(255,255,255,.62);
+    font-size: 13px;
+    line-height: 1.75;
+    cursor: pointer;
+    text-align: left;
+    transition: background .2s, border-color .2s, color .2s;
+    font-family: var(--font-serif);
+    letter-spacing: .03em;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .opt-btn.selected {
+    background: rgba(164,184,216,.12);
+    border-color: rgba(164,184,216,.45);
+    color: rgba(255,255,255,.92);
+  }
+
+  .opt-label {
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    color: rgba(164,184,216,.55);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .opt-btn.selected .opt-label { color: var(--accent); }
+
+  .btn-next {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid rgba(164,184,216,.38);
+    border-radius: 40px;
+    color: var(--accent-light);
+    font-size: 13px;
+    letter-spacing: .16em;
+    cursor: pointer;
+    transition: opacity .25s, background .25s;
+    font-family: var(--font-serif);
+    opacity: .3;
+    pointer-events: none;
+  }
+
+  .btn-next.ready { opacity: 1; pointer-events: all; }
+  .btn-next.ready:hover { background: rgba(164,184,216,.08); }
+
+  /* ── Result ── */
+  .result-label {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: .28em;
+    color: rgba(164,184,216,.45);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .result-symbol {
+    text-align: center;
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+
+  .result-name {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: .16em;
+    margin-bottom: 8px;
+  }
+
+  .result-catch {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: .1em;
+    opacity: .75;
+    margin-bottom: 28px;
+  }
+
+  .result-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+    margin-bottom: 28px;
+  }
+
+  .section { margin-bottom: 22px; }
+
+  .section-title {
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+    opacity: .9;
+  }
+
+  .section-body {
+    font-size: 13px;
+    line-height: 2.1;
+    color: rgba(255,255,255,.62);
+    letter-spacing: .04em;
+  }
+
+  .word-box {
+    border: 1px solid rgba(164,184,216,.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 28px 0;
+    background: rgba(255,255,255,.02);
+  }
+
+  .word-label {
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: rgba(255,255,255,.28);
+    margin-bottom: 12px;
+  }
+
+  .word-text {
+    font-size: 14px;
+    line-height: 2.3;
+    letter-spacing: .06em;
+  }
+
+  .closing {
+    font-size: 11.5px;
+    line-height: 2.3;
+    text-align: center;
+    color: rgba(255,255,255,.3);
+    letter-spacing: .05em;
+    margin-bottom: 28px;
+  }
+
+  .btn-retry {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 40px;
+    color: rgba(255,255,255,.35);
+    font-size: 12px;
+    letter-spacing: .16em;
+    cursor: pointer;
+    font-family: var(--font-serif);
+    transition: border-color .25s, color .25s;
+  }
+
+  .btn-retry:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.6); }
+
+  /* ── Loading ── */
+  #loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    gap: 20px;
+  }
+
+  .loader-icon { font-size: 40px; animation: pulse 2s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%,100% { opacity: .5; transform: scale(1); }
+    50%      { opacity: 1; transform: scale(1.08); }
+  }
+
+  .loader-text {
+    font-size: 12px;
+    letter-spacing: .2em;
+    color: rgba(164,184,216,.5);
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div id="app">
+
+  <!-- Loading -->
+  <div id="loading-screen">
+    <div class="loader-icon">🔭</div>
+    <p class="loader-text">観測所を準備しています…</p>
+  </div>
+
+  <!-- Intro -->
+  <div class="screen" id="screen-intro">
+    <div class="card">
+      <div class="intro-icon">🔭</div>
+      <h1 class="main-title">小さな心の観測所</h1>
+      <div class="divider"></div>
+      <p class="intro-body">
+        今夜、あなたの心の空には、<br>
+        どんな星が見えているでしょうか。<br><br>
+        ここは、小さな観測所です。<br>
+        望遠鏡を覗き込むように、<br>
+        今の自分の内側にそっと目を向ける場所。<br><br>
+        正しい答えも、間違いもありません。<br>
+        ただ、「今のわたし」を、<br>
+        責めずにながめてみてください。
+      </p>
+      <p class="intro-hint">7つの問いに答えると、今日の心の景色をお伝えします。</p>
+      <button class="btn-primary" onclick="startQuiz()">観測をはじめる</button>
+      <p class="disclaimer">※ この診断は娯楽・内省目的のコンテンツです。医療的な診断ではありません。</p>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="screen" id="screen-quiz">
+    <div class="card">
+      <div class="progress-row" id="progress"></div>
+      <p class="q-num" id="q-num"></p>
+      <p class="q-text" id="q-text"></p>
+      <div class="options" id="options"></div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">つぎへ　→</button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="screen" id="screen-result">
+    <div class="card" id="result-card">
+      <p class="result-label">観測結果</p>
+      <div class="result-symbol" id="r-symbol"></div>
+      <h2 class="result-name" id="r-name"></h2>
+      <p class="result-catch" id="r-catch"></p>
+      <div class="result-divider"></div>
+      <div class="section">
+        <p class="section-title" id="r-t1">◇ 今の心の観測レポート</p>
+        <p class="section-body" id="r-b1"></p>
+      </div>
+      <div class="section">
+        <p class="section-title" id="r-t2">◇ あなたの強み</p>
+        <p class="section-body" id="r-b2"></p>
+      </div>
+      <div class="section">
+        <p class="section-title" id="r-t3">◇ 少し疲れやすいところ</p>
+        <p class="section-body" id="r-b3"></p>
+      </div>
+      <div class="section">
+        <p class="section-title" id="r-t4">◇ 今のあなたに合う過ごし方</p>
+        <p class="section-body" id="r-b4"></p>
+      </div>
+      <div class="word-box" id="r-word-box">
+        <p class="word-label">自分にかけてあげたい言葉</p>
+        <p class="word-text" id="r-word"></p>
+      </div>
+      <p class="closing">
+        この診断は、あなたの全部を言い当てるものではありません。<br>
+        ただ、今夜のあなたの心の空に、<br>
+        少しだけ光を当ててみたかった。<br><br>
+        もし一人では抱えきれない重さを感じているなら、<br>
+        信頼できる人や専門の相談窓口に、<br>
+        声をかけてみてください。
+      </p>
+      <button class="btn-retry" onclick="retry()">もう一度観測する</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────
+const QUESTIONS = [
+  {
+    text: "ひとりの時間に、あなたはどんな過ごし方をしていますか？",
+    opts: [
+      { label:"A", text:"好きな本や音楽の中に、静かに沈んでいく", type:"moon" },
+      { label:"B", text:"何かを作ったり、書いたり、手を動かしていたい", type:"dawn" },
+      { label:"C", text:"ぼんやりしながら、窓の外や遠くを見ていることが多い", type:"star" },
+      { label:"D", text:"気づくと次の予定や、やるべきことを考えている", type:"lighthouse" },
+    ]
+  },
+  {
+    text: "誰かと話しているとき、どちらに近い感覚がありますか？",
+    opts: [
+      { label:"A", text:"聞く方が、話すより好きだ", type:"star" },
+      { label:"B", text:"話しながら、自分の気持ちが整理されていく", type:"dawn" },
+      { label:"C", text:"本当に伝えたいことは、言葉にならないことが多い", type:"moon" },
+      { label:"D", text:"どこか少し、気を遣いながら話している気がする", type:"lighthouse" },
+    ]
+  },
+  {
+    text: "疲れを感じたとき、最初にしたくなることは？",
+    opts: [
+      { label:"A", text:"ひとりになって、静かな場所にいたい", type:"star" },
+      { label:"B", text:"好きなことに没頭して、気持ちを切り替えたい", type:"dawn" },
+      { label:"C", text:"ただ、横になってぼうっとしていたい", type:"moon" },
+      { label:"D", text:"誰かと話したい、あるいは連絡を取りたい", type:"lighthouse" },
+    ]
+  },
+  {
+    text: "予定外のことが起きたとき、どう感じますか？",
+    opts: [
+      { label:"A", text:"少し戸惑うけれど、じっくり受け止めようとする", type:"moon" },
+      { label:"B", text:"動揺しながらも、どう動けばいいかを考えはじめる", type:"lighthouse" },
+      { label:"C", text:"しばらく、頭の中でぐるぐると考え続けてしまう", type:"star" },
+      { label:"D", text:"なんとかなるか、という気持ちで受け流せる", type:"dawn" },
+    ]
+  },
+  {
+    text: "未来のことを考えるとき、どんな気持ちになりますか？",
+    opts: [
+      { label:"A", text:"漠然とした不安と、かすかな期待が混ざっている", type:"star" },
+      { label:"B", text:"あまり先のことは考えず、今日のことで精一杯だ", type:"moon" },
+      { label:"C", text:"こうなったらいいな、という景色を静かに思い描いている", type:"dawn" },
+      { label:"D", text:"計画や見通しがあると、少し安心できる", type:"lighthouse" },
+    ]
+  },
+  {
+    text: "自分を責めたくなるとき、どんなきっかけが多いですか？",
+    opts: [
+      { label:"A", text:"誰かに迷惑をかけたかも、と感じたとき", type:"lighthouse" },
+      { label:"B", text:"うまくいかなかったこと、できなかったことがあったとき", type:"dawn" },
+      { label:"C", text:"何もできていない気がするとき、理由がよくわからなくても", type:"moon" },
+      { label:"D", text:"あまり自分を責めることはない、または気づかないうちに流している", type:"star" },
+    ]
+  },
+  {
+    text: "心が落ち着くのは、どんな景色や場面ですか？",
+    opts: [
+      { label:"A", text:"静かな場所に、光がやわらかく差しているとき", type:"moon" },
+      { label:"B", text:"何かに集中して、時間を忘れているとき", type:"dawn" },
+      { label:"C", text:"自然の中にいて、何も考えなくていいとき", type:"star" },
+      { label:"D", text:"好きな人や場所のそばにいて、ほっとしているとき", type:"lighthouse" },
+    ]
+  },
+];
+
+const RESULTS = {
+  star: {
+    symbol:"✦", name:"星を待つ人",
+    catch:"静寂の中に、深いものを知っている",
+    color:"#a8b8d8", accent:"#d4e0f0",
+    report:"今のあなたの心の空には、まだ雲がかかっているかもしれません。でも、その雲の向こうに、ちゃんと星があることを、どこかで知っている。言葉にならない感情を、ひとりでそっと抱えているような時間が多いかもしれません。騒がしさより静けさを好み、深いところで物事を感じ取る力を持っています。",
+    strength:"感受性が豊かで、ものごとの表面だけでなく、その奥にあるものを感じ取れます。場の空気や、相手の言葉の裏側にある気持ちに、自然と気づける人です。ひとりの時間を大切にすることで、自分の内側をゆっくりと育てていけます。",
+    care:"感じすぎてしまうために、知らないうちに心が重くなっていることがあるかもしれません。伝えたいことがあっても、言葉を選びすぎて、言いそびれてしまうことも。これは欠点ではなく、あなたの心が誠実である証かもしれません。",
+    howto:"急がなくていい。ひとりで静かに過ごす時間を、どうかそのまま大切にしてください。日記を書いたり、好きな音楽をかけながら窓の外を見たり。何も生産しなくていい、ただ「いる」だけの時間が、今のあなたには必要かもしれません。",
+    word:"今夜は、何も見えなくていい。\n見えなくても、星はそこにある。\nあなたも、そこにいる。それで十分だよ。",
+  },
+  moon: {
+    symbol:"◑", name:"月明かりの記録係",
+    catch:"揺れながらも、ちゃんと自分を見ている",
+    color:"#c4b8e0", accent:"#e0d8f4",
+    report:"今のあなたは、自分の内側を静かに記録しているような時間の中にいるかもしれません。うまく言葉にならない気持ちや、何となく続く重さを、ひとりで抱えている部分があるかも。でも、そのぐるぐるした思考の中に、ちゃんと自分への眼差しがあります。責めているように見えて、実はとても真摯に、自分と向き合っている人です。",
+    strength:"内省力が高く、自分の心の動きをよく知っています。感情に流されるのではなく、一度立ち止まって「なぜそう感じるのか」を考えようとする。その力は、自己理解を深め、やがて人にもやさしくなれる土台になります。",
+    care:"考えすぎてしまうことで、同じ場所をぐるぐると歩き続けてしまうことがあるかもしれません。答えを出そうとしすぎると、かえって迷子になることも。「答えを出さなくてもいい問いもある」ということを、今のあなたは知っていいと思います。",
+    howto:"思考を書き出すこと、または声に出してみること。頭の中で循環しているものを、外に出すだけで、少し軽くなることがあります。信頼できる誰かに「聞いてほしいだけ」と伝えて話すのも、今のあなたに合っているかもしれません。",
+    word:"答えが出なくても、あなたは前に進んでいる。\nぐるぐるしていることさえも、\nあなたがちゃんと生きている証だよ。",
+  },
+  lighthouse: {
+    symbol:"◈", name:"静かな灯台守",
+    catch:"誰かのために、自分を使い続けてきた人",
+    color:"#b8d4c4", accent:"#d8ede4",
+    report:"今のあなたは、誰かの道を照らすことに、静かに力を注いでいるかもしれません。気を配ること、支えること、役に立つことで安心を感じる部分があるのかも。周りの人にとって、あなたはきっと頼りになる灯台のような存在です。ただ、灯台自身も、時には点検が必要です。あなた自身の光は、今どのくらいありますか？",
+    strength:"信頼感があり、周囲に安心を与えることができる人です。場を整えたり、誰かの気持ちに寄り添ったりすることが自然とできます。粘り強く、責任感があり、困難な場面でも踏ん張れる力を持っています。",
+    care:"「自分のことは後でいい」が続きすぎてしまうことがあるかもしれません。助けを求めることや、弱さを見せることに、少しためらいがあるかも。でも、あなたが満たされていてこそ、灯台の光は遠くまで届きます。",
+    howto:"今日は「誰かのため」ではなく、「ただ自分が好きなこと」だけをしてみてください。何かを達成しなくていい、役に立たなくていい時間を、意識的に作ってみると、少し楽になるかもしれません。",
+    word:"あなたが灯台でいてくれたから、\nたどり着けた人がいる。\n今日は、あなたのための光を、灯していい。",
+  },
+  dawn: {
+    symbol:"◎", name:"夜明け前の旅人",
+    catch:"動きながら、探し続けている",
+    color:"#d4c8a8", accent:"#ede8d0",
+    report:"今のあなたは、どこかへ向かって歩き続けている感覚があるかもしれません。止まることへの少しの怖さと、動き続けることでのかすかな安心。エネルギーがあり、行動できる人ですが、ふと「どこへ向かっているんだろう」と立ち止まる瞬間もあるかも。それは迷いではなく、旅の途中で地図を確認しているだけです。",
+    strength:"行動力があり、変化の中でも前に進む力を持っています。問題が起きたとき、嘆くよりも「どうすれば」と考えられる人です。好奇心があり、新しいことへの適応が早い。その力は、人生を豊かにしていきます。",
+    care:"動き続けることが習慣になりすぎると、休むことが難しくなることがあるかもしれません。気持ちを後回しにして、行動で埋めようとしている場面があるとしたら、今がそれを少し確認するタイミングかも。",
+    howto:"たまには、歩みをゆっくりにしてみてください。足元の景色は、立ち止まったときにしか見えないものがあります。好きな飲み物を用意して、何もしない15分を作るだけでも、違うかもしれません。",
+    word:"夜明けは、急いでも早くならない。\n歩き続けているあなたに、\n朝はちゃんとやってくる。",
+  },
+};
+
+// ── State ────────────────────────────────────────
+let current = 0;
+let scores = { star:0, moon:0, lighthouse:0, dawn:0 };
+let selected = null;
+
+// ── Stars ─────────────────────────────────────────
+function buildStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 65; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const op = (Math.random() * .55 + .15).toFixed(2);
+    const size = (Math.random() * 2 + .6).toFixed(1);
+    s.style.cssText = `
+      left:${(Math.random()*100).toFixed(1)}%;
+      top:${(Math.random()*100).toFixed(1)}%;
+      width:${size}px; height:${size}px;
+      --op:${op};
+      --dur:${(Math.random()*3+2).toFixed(1)}s;
+      --delay:${(Math.random()*5).toFixed(1)}s;
+    `;
+    container.appendChild(s);
+  }
+}
+
+// ── Screens ───────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+// ── Quiz ──────────────────────────────────────────
+function startQuiz() {
+  current = 0;
+  scores = { star:0, moon:0, lighthouse:0, dawn:0 };
+  selected = null;
+  renderQuestion();
+  show('screen-quiz');
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[current];
+
+  // Progress dots
+  const prog = document.getElementById('progress');
+  prog.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'pdot' + (i < current ? ' done' : i === current ? ' current' : '');
+    prog.appendChild(d);
+  });
+
+  document.getElementById('q-num').textContent = `Q${current+1} / ${QUESTIONS.length}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const optContainer = document.getElementById('options');
+  optContainer.innerHTML = '';
+  q.opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${opt.label}</span><span>${opt.text}</span>`;
+    btn.onclick = () => selectOption(opt.type, btn);
+    optContainer.appendChild(btn);
+  });
+
+  selected = null;
+  const next = document.getElementById('btn-next');
+  next.classList.remove('ready');
+  next.textContent = current < QUESTIONS.length - 1 ? 'つぎへ　→' : '観測する　✦';
+}
+
+function selectOption(type, btn) {
+  document.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = type;
+  document.getElementById('btn-next').classList.add('ready');
+}
+
+function nextQuestion() {
+  if (!selected) return;
+  scores[selected]++;
+  if (current < QUESTIONS.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+// ── Result ────────────────────────────────────────
+function showResult() {
+  const top = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+  const r = RESULTS[top];
+
+  document.getElementById('r-symbol').textContent = r.symbol;
+  document.getElementById('r-symbol').style.color = r.color;
+  document.getElementById('r-name').textContent = r.name;
+  document.getElementById('r-name').style.color = r.color;
+  document.getElementById('r-catch').textContent = `— ${r.catch} —`;
+  document.getElementById('r-catch').style.color = r.accent;
+
+  document.getElementById('r-t1').style.color = r.color;
+  document.getElementById('r-t2').style.color = r.color;
+  document.getElementById('r-t3').style.color = r.color;
+  document.getElementById('r-t4').style.color = r.color;
+
+  document.getElementById('r-b1').textContent = r.report;
+  document.getElementById('r-b2').textContent = r.strength;
+  document.getElementById('r-b3').textContent = r.care;
+  document.getElementById('r-b4').textContent = r.howto;
+
+  document.getElementById('r-word-box').style.borderColor = r.color + '50';
+  document.getElementById('r-word').style.color = r.accent;
+  document.getElementById('r-word').innerHTML = r.word.replace(/\n/g, '<br>');
+
+  show('screen-result');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function retry() {
+  show('screen-intro');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ── Init ──────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  buildStars();
+  setTimeout(() => {
+    document.getElementById('loading-screen').style.display = 'none';
+    show('screen-intro');
+  }, 1200);
+});
+</script>
+</body>
+</html>
